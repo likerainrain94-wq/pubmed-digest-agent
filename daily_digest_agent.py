@@ -144,7 +144,7 @@ def send_email(html_content):
     msg['From'] = EMAIL_SENDER
     # Use a comma-separated string for the 'To' header
     msg['To'] = ", ".join(EMAIL_RECEIVER)
-    msg['Subject'] = f"Literature Digest: {KEYWORDS[0]} and related terms ({datetime.now().strftime('%Y-%m-%d')})"
+    msg['Subject'] = f"Dai Lab Literature Digest: {KEYWORDS[0]} ({datetime.now().strftime('%Y-%m-%d')})"
     
     msg.attach(MIMEText(html_content, 'html'))
     
