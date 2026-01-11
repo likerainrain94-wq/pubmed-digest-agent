@@ -20,7 +20,7 @@ else:
     EMAIL_RECEIVER = []
 
 # Search Keywords (can be updated here or made an environment variable)
-KEYWORDS = ["pulmonary hypertension", "pulmonary arterial hypertension", "right heart failure", "lung endothelial dysfunction"]
+KEYWORDS = ["intensive blood pressure", "arterial hypertension", "cardiovascular disease", "cardiometabolic"]
 # ---------------------
 
 def fetch_articles():
@@ -109,7 +109,7 @@ def format_html_email(data):
     </style>
     </head>
     <body>
-    <h2>Daily Dai Lab Literature Digest</h2>
+    <h2>Daily YU XU's research team Literature Digest</h2>
     <table>
         <tr>
             <th style="width: 50%;">Title (Click to Read)</th>
