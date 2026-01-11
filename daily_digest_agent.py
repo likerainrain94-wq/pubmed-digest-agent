@@ -20,7 +20,7 @@ else:
     EMAIL_RECEIVER = []
 
 # Search Keywords (can be updated here or made an environment variable)
-KEYWORDS = ["intensive blood pressure", "arterial hypertension"]
+KEYWORDS = ["intensive blood pressure", "hypertension", "cardiometabolic"]
 # ---------------------
 
 def fetch_articles():
@@ -31,30 +31,30 @@ def fetch_articles():
     Entrez.email = ENTREZ_EMAIL
     
     # Calculate date range (Yesterday)
-    # yesterday = (datetime.now() - timedelta(days=1)).strftime("%Y/%m/%d")
+    yesterday = (datetime.now() - timedelta(days=1)).strftime("%Y/%m/%d")
 
     # Calculate date range (Past 7 days, inclusive)
-    end_date = datetime.now().strftime("%Y/%m/%d")
-    start_date = (datetime.now() - timedelta(days=7)).strftime("%Y/%m/%d")
+    #end_date = datetime.now().strftime("%Y/%m/%d")
+    #start_date = (datetime.now() - timedelta(days=7)).strftime("%Y/%m/%d")
 
     # Construct the PubMed query using OR operator for multiple terms
     search_terms = [f'"{term}"[Title/Abstract]' for term in KEYWORDS]
     pubmed_query_terms = " OR ".join(search_terms)
 
     # Date range query (past 7 days)
-    search_query = (
-        f'({pubmed_query_terms}) AND '
+    #search_query = (
+    #    f'({pubmed_query_terms}) AND '
         f'("{start_date}"[Date - Publication] : "{end_date}"[Date - Publication])'
     )
 
-    print(f"Searching for articles matching: ({pubmed_query_terms}) published from {start_date} to {end_date}...")
+    #print(f"Searching for articles matching: ({pubmed_query_terms}) published from {start_date} to {end_date}...")
     
     # Construct the PubMed query using OR operator for multiple terms when past 1 day - ending at print.
-    # search_terms = [f'"{term}"[Title/Abstract]' for term in KEYWORDS]
-    # pubmed_query_terms = " OR ".join(search_terms)
-    # search_query = f'({pubmed_query_terms}) AND {yesterday}[Date - Publication]'
+    search_terms = [f'"{term}"[Title/Abstract]' for term in KEYWORDS]
+    pubmed_query_terms = " OR ".join(search_terms)
+    search_query = f'({pubmed_query_terms}) AND {yesterday}[Date - Publication]'
     
-    #print(f"Searching for articles matching: ({pubmed_query_terms}) published on {yesterday}...")
+    print(f"Searching for articles matching: ({pubmed_query_terms}) published on {yesterday}...")
     
     try:
         handle = Entrez.esearch(db="pubmed", term=search_query, retmax=50, sort="pub+date")
