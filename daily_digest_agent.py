@@ -38,12 +38,11 @@ def fetch_articles():
     start_date = (datetime.now() - timedelta(days=7)).strftime("%Y/%m/%d")
 
 # if 7 days
-   search_query = (
+    search_query = (
     f'({pubmed_query_terms}) AND '
-    f'("{start_date}"[Date - Publication] : "{end_date}"[Date - Publication])'
-)
-
-   print(f"Searching for articles matching: ({pubmed_query_terms}) published from {start_date} to {end_date}...")
+    f'("{start_date}"[Date - Publication] : "{end_date}"[Date - Publication])')
+    
+    print(f"Searching for articles matching: ({pubmed_query_terms}) published from {start_date} to {end_date}...")
     
     # Construct the PubMed query using OR operator for multiple terms when past 1 day - ending at print.
     # search_terms = [f'"{term}"[Title/Abstract]' for term in KEYWORDS]
