@@ -20,7 +20,7 @@ else:
     EMAIL_RECEIVER = []
 
 # Search Keywords (can be updated here or made an environment variable)
-KEYWORDS = ["intensive blood pressure", "arterial hypertension", "cardiovascular disease", "cardiometabolic", "omics"]
+KEYWORDS = ["intensive blood pressure", "arterial hypertension"]
 # ---------------------
 
 def fetch_articles():
