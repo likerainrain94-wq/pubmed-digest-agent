@@ -37,7 +37,7 @@ def fetch_articles():
     end_date = datetime.now().strftime("%Y/%m/%d")
     start_date = (datetime.now() - timedelta(days=7)).strftime("%Y/%m/%d")
 
-# if 7 days:
+# if 7 days
    search_query = (
     f'({pubmed_query_terms}) AND '
     f'("{start_date}"[Date - Publication] : "{end_date}"[Date - Publication])'
