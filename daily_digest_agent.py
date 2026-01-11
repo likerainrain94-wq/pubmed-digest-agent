@@ -38,14 +38,14 @@ def fetch_articles():
     #start_date = (datetime.now() - timedelta(days=7)).strftime("%Y/%m/%d")
 
     # Construct the PubMed query using OR operator for multiple terms
-    search_terms = [f'"{term}"[Title/Abstract]' for term in KEYWORDS]
-    pubmed_query_terms = " OR ".join(search_terms)
+    # search_terms = [f'"{term}"[Title/Abstract]' for term in KEYWORDS]
+    # pubmed_query_terms = " OR ".join(search_terms)
 
     # Date range query (past 7 days)
     #search_query = (
     #    f'({pubmed_query_terms}) AND '
-        f'("{start_date}"[Date - Publication] : "{end_date}"[Date - Publication])'
-    )
+    #    f'("{start_date}"[Date - Publication] : "{end_date}"[Date - Publication])'
+    # )
 
     #print(f"Searching for articles matching: ({pubmed_query_terms}) published from {start_date} to {end_date}...")
     
@@ -57,7 +57,7 @@ def fetch_articles():
     print(f"Searching for articles matching: ({pubmed_query_terms}) published on {yesterday}...")
     
     try:
-        handle = Entrez.esearch(db="pubmed", term=search_query, retmax=50, sort="pub+date")
+        handle = Entrez.esearch(db="pubmed", term=search_query, retmax=30, sort="pub+date")
         record = Entrez.read(handle)
         handle.close()
         
