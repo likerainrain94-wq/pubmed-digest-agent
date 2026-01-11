@@ -3,9 +3,9 @@ name: Daily Scientific Literature Digest
 on:
   schedule:
     # Runs at 12:00 UTC every day.
-    # Check current UTC time and adjust this cron schedule if 7 AM in your local time is different.
+    # Check current UTC time and adjust this cron schedule if 7 AM in your local time is different（08:00 in UTC+8）.
     # Example: '0 10 * * *' runs at 10:00 UTC.
-    - cron: '0 12 * * *'
+    - cron: '0 0 * * *'
   
   # Allows manual testing from the GitHub Actions tab
   workflow_dispatch:
