@@ -2,7 +2,8 @@ import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from Bio import Entrez
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
+from zoneinfo import ZoneInfo
 import os
 
 # --- CONFIGURATION: Reading from Environment Variables for Security ---
@@ -31,25 +32,14 @@ def fetch_articles():
     Entrez.email = ENTREZ_EMAIL
     
     # Calculate date range (Yesterday)
-    yesterday = (datetime.now() - timedelta(days=1)).strftime("%Y/%m/%d")
-
-    # Calculate date range (Past 7 days, inclusive)
-    #end_date = datetime.now().strftime("%Y/%m/%d")
-    #start_date = (datetime.now() - timedelta(days=7)).strftime("%Y/%m/%d")
-
-    # Construct the PubMed query using OR operator for multiple terms
-    # search_terms = [f'"{term}"[Title/Abstract]' for term in KEYWORDS]
-    # pubmed_query_terms = " OR ".join(search_terms)
-
-    # Date range query (past 7 days)
-    #search_query = (
-    #    f'({pubmed_query_terms}) AND '
-    #    f'("{start_date}"[Date - Publication] : "{end_date}"[Date - Publication])'
-    # )
-
-    #print(f"Searching for articles matching: ({pubmed_query_terms}) published from {start_date} to {end_date}...")
+    tz = ZoneInfo("Asia/Shanghai")
+    today_cn = datetime.now(tz).date()
+    yesterday_cn = today_cn - timedelta(days=1)
     
-    # Construct the PubMed query using OR operator for multiple terms when past 1 day - ending at print.
+    mindate = yesterday_cn.strftime("%Y/%m/%d")
+    maxdate = yesterday_cn.strftime("%Y/%m/%d")
+    
+    # Construct the PubMed query using OR operator for multiple terms
     search_terms = [f'"{term}"[Title/Abstract]' for term in KEYWORDS]
     pubmed_query_terms = " OR ".join(search_terms)
     search_query = f'({pubmed_query_terms}) AND {yesterday}[Date - Publication]'
@@ -57,10 +47,14 @@ def fetch_articles():
     print(f"Searching for articles matching: ({pubmed_query_terms}) published on {yesterday}...")
     
     try:
-        handle = Entrez.esearch(db="pubmed", term=search_query, retmax=100, sort="pub+date")
-        record = Entrez.read(handle)
-        handle.close()
-        
+        handle = Entrez.esearch(
+            db="pubmed",
+            term=f"({pubmed_query_terms})",
+            mindate=mindate,
+            maxdate=maxdate,
+            datetype="edat",   # 入库日期，publication date；你也可改成 "pdat" 看“发表日期”
+            retmax=100
+        )
         id_list = record["IdList"]
         if not id_list:
             print("No articles found in search results.")
@@ -125,7 +119,7 @@ def format_html_email(data):
     </style>
     </head>
     <body>
-    <h2>Daily Clinical Epi research group Literature Digest</h2>
+    <h2>Daily Siyu Zhiping Yuxiang Literature Digest</h2>
     <table>
         <tr>
             <th style="width: 50%;">Title (Click to Read)</th>
@@ -160,7 +154,7 @@ def send_email(html_content):
     msg['From'] = EMAIL_SENDER
     # Use a comma-separated string for the 'To' header
     msg['To'] = ", ".join(EMAIL_RECEIVER)
-    msg['Subject'] = f"Siyu Zhiping Yuxiang Literature Digest: {KEYWORDS[0]} ({datetime.now().strftime('%Y-%m-%d')})"
+    msg['Subject'] = f"Siyu Zhiping YuXiang Literature Digest: {KEYWORDS[0]} ({datetime.now(tz).strftime('%Y-%m-%d')})"
     
     msg.attach(MIMEText(html_content, 'html'))
     
