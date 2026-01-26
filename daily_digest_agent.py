@@ -20,7 +20,7 @@ else:
     EMAIL_RECEIVER = []
 
 # Search Keywords (can be updated here or made an environment variable)
-KEYWORDS = ["intensive blood pressure", "hypertension", "diabetes"]
+KEYWORDS = ["intensive blood pressure", "fraity", "C-reactive protein", "inflammation", "biological age"]
 # ---------------------
 
 def fetch_articles():
@@ -57,7 +57,7 @@ def fetch_articles():
     print(f"Searching for articles matching: ({pubmed_query_terms}) published on {yesterday}...")
     
     try:
-        handle = Entrez.esearch(db="pubmed", term=search_query, retmax=30, sort="pub+date")
+        handle = Entrez.esearch(db="pubmed", term=search_query, retmax=100, sort="pub+date")
         record = Entrez.read(handle)
         handle.close()
         
@@ -160,7 +160,7 @@ def send_email(html_content):
     msg['From'] = EMAIL_SENDER
     # Use a comma-separated string for the 'To' header
     msg['To'] = ", ".join(EMAIL_RECEIVER)
-    msg['Subject'] = f"Yu XIANG Literature Digest: {KEYWORDS[0]} ({datetime.now().strftime('%Y-%m-%d')})"
+    msg['Subject'] = f"Siyu Zhiping Yuxiang Literature Digest: {KEYWORDS[0]} ({datetime.now().strftime('%Y-%m-%d')})"
     
     msg.attach(MIMEText(html_content, 'html'))
     
