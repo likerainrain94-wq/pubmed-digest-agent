@@ -20,7 +20,7 @@ else:
     EMAIL_RECEIVER = []
 
 # Search Keywords (can be updated here or made an environment variable)
-KEYWORDS = ["intensive blood pressure", "frailty", "C-reactive protein", "biological age"]
+KEYWORDS = ["intensive blood pressure", "frailty", "C-reactive protein", “inflammation", "biological age"]
 # ---------------------
 
 def fetch_articles():
@@ -41,7 +41,7 @@ def fetch_articles():
     print(f"Searching for articles matching: ({pubmed_query_terms}) published on {yesterday}...")
     
     try:
-        handle = Entrez.esearch(db="pubmed", term=search_query, retmax=20)
+        handle = Entrez.esearch(db="pubmed", term=search_query, retmax=100)
         record = Entrez.read(handle)
         handle.close()
         
