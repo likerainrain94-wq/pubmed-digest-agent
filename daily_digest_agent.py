@@ -3,97 +3,76 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from Bio import Entrez
 from datetime import datetime, timedelta
-from zoneinfo import ZoneInfo
 import os
 
-# =========================
-# Global settings
-# =========================
-TZ = ZoneInfo("Asia/Shanghai")  # 中国时区（无夏令时）
-
+# --- CONFIGURATION: Reading from Environment Variables for Security ---
+# These are loaded from GitHub Secrets (or environment variables in PythonAnywhere)
 EMAIL_SENDER = os.environ.get("EMAIL_SENDER")
-EMAIL_PASSWORD = os.environ.get("EMAIL_PASSWORD")
-EMAIL_RECEIVER_STR = os.environ.get("EMAIL_RECEIVER")
-ENTREZ_EMAIL = os.environ.get("ENTREZ_EMAIL")
+EMAIL_PASSWORD = os.environ.get("EMAIL_PASSWORD") 
+# EMAIL_RECEIVER_STR handles multiple recipients passed as a comma-separated string
+EMAIL_RECEIVER_STR = os.environ.get("EMAIL_RECEIVER") 
+ENTREZ_EMAIL = os.environ.get("ENTREZ_EMAIL") 
 
+# Convert the receiver string to a list of emails for smtplib.sendmail()
 if EMAIL_RECEIVER_STR:
-    EMAIL_RECEIVER = [e.strip() for e in EMAIL_RECEIVER_STR.split(",") if e.strip()]
+    EMAIL_RECEIVER = [e.strip() for e in EMAIL_RECEIVER_STR.split(',')]
 else:
     EMAIL_RECEIVER = []
 
-
+# Search Keywords (can be updated here or made an environment variable)
 KEYWORDS = ["intensive blood pressure", "frailty", "C-reactive protein", "biological age"]
+# ---------------------
 
-# =========================
-# PubMed fetch
-# =========================
-def fetch_articles(datetype: str = "pdat", retmax: int = 100):
-    """
-    datetype:
-      - "edat": PubMed收录/更新日期（更贴合“昨日新增”digest）
-      - "pdat": 发表日期（更贴合“昨日发表”）
-    """
+def fetch_articles():
     if not ENTREZ_EMAIL:
         print("Error: ENTREZ_EMAIL not set.")
         return []
-
+        
     Entrez.email = ENTREZ_EMAIL
-
-    # 以中国日期定义“昨天”
-    today_cn = datetime.now(TZ).date()
-    yesterday_cn = today_cn - timedelta(days=1)
-    mindate = yesterday_cn.strftime("%Y/%m/%d")
-    maxdate = yesterday_cn.strftime("%Y/%m/%d")
-
-    # term 只做关键词逻辑；日期用 mindate/maxdate/datetype 控制
+    
+    # Calculate date range (Yesterday)
+    yesterday = (datetime.now() - timedelta(days=1)).strftime("%Y/%m/%d")
+    
+    # Construct the PubMed query using OR operator for multiple terms
     search_terms = [f'"{term}"[Title/Abstract]' for term in KEYWORDS]
     pubmed_query_terms = " OR ".join(search_terms)
-    term = f"({pubmed_query_terms})"
-
-    print(f"Searching PubMed: {term}")
-    print(f"Date window ({datetype}) in China date: {mindate} to {maxdate}")
-
+    search_query = f'({pubmed_query_terms}) AND {yesterday}[Date - Publication]'
+    
+    print(f"Searching for articles matching: ({pubmed_query_terms}) published on {yesterday}...")
+    
     try:
-        handle = Entrez.esearch(
-            db="pubmed",
-            term=term,
-            mindate=mindate,
-            maxdate=maxdate,
-            datetype=datetype,
-            retmax=retmax,
-        )
+        handle = Entrez.esearch(db="pubmed", term=search_query, retmax=20)
         record = Entrez.read(handle)
         handle.close()
-
-        id_list = record.get("IdList", [])
+        
+        id_list = record["IdList"]
         if not id_list:
             print("No articles found in search results.")
             return []
 
-        handle = Entrez.efetch(
-            db="pubmed",
-            id=",".join(id_list),
-            rettype="medline",
-            retmode="xml",
-        )
+        # Fetch details
+        handle = Entrez.efetch(db="pubmed", id=id_list, rettype="medline", retmode="xml")
         articles = Entrez.read(handle)
         handle.close()
-
+        
     except Exception as e:
         print(f"Error during PubMed API call: {e}")
         return []
 
     digest_data = []
-    for article in articles.get("PubmedArticle", []):
+    
+    for article in articles.get('PubmedArticle', []):
         try:
-            medline = article["MedlineCitation"]["Article"]
-            title = medline.get("ArticleTitle", "No Title")
-            journal = medline.get("Journal", {}).get("Title", "No Journal")
-
-            pmid = article["MedlineCitation"]["PMID"]
+            medline = article['MedlineCitation']['Article']
+            title = medline.get('ArticleTitle', 'No Title')
+            journal = medline.get('Journal', {}).get('Title', 'No Journal')
+            
+            # Get PMID and create Link
+            pmid = article['MedlineCitation']['PMID']
             link = f"https://pubmed.ncbi.nlm.nih.gov/{pmid}/"
 
-            author_list = medline.get("AuthorList", [])
+            # Author Logic
+            author_list = medline.get('AuthorList', [])
             if not author_list:
                 authors = "No Authors Listed"
             elif len(author_list) == 1:
@@ -102,21 +81,19 @@ def fetch_articles(datetype: str = "pdat", retmax: int = 100):
                 first = f"{author_list[0].get('LastName', '')} {author_list[0].get('Initials', '')}"
                 last = f"{author_list[-1].get('LastName', '')} {author_list[-1].get('Initials', '')}"
                 authors = f"{first} ... {last}"
-
-            digest_data.append(
-                {"title": title, "authors": authors, "journal": journal, "url": link}
-            )
-
+            
+            digest_data.append({
+                'title': title,
+                'authors': authors,
+                'journal': journal,
+                'url': link
+            })
         except Exception as e:
             print(f"Skipping article due to parsing error: {e}")
             continue
-
+            
     return digest_data
 
-
-# =========================
-# Email format + send
-# =========================
 def format_html_email(data):
     html = """
     <html>
@@ -132,7 +109,7 @@ def format_html_email(data):
     </style>
     </head>
     <body>
-    <h2>Daily Siyu Zhiping Yuxiang Literature Digest</h2>
+    <h2>Siyu Zhiping Xiangyu Literature Digest</h2>
     <table>
         <tr>
             <th style="width: 50%;">Title (Click to Read)</th>
@@ -140,24 +117,23 @@ def format_html_email(data):
             <th style="width: 25%;">Journal</th>
         </tr>
     """
-
+    
     for row in data:
         html += f"""
         <tr>
-            <td><a href="{row['url']}" class="title">{row['title']}</a></td>
+            <td><a href=\"{row['url']}\" class=\"title\">{row['title']}</a></td>
             <td>{row['authors']}</td>
-            <td class="journal">{row['journal']}</td>
+            <td class=\"journal\">{row['journal']}</td>
         </tr>
         """
-
+        
     html += """
     </table>
-    <p><em>Generated by Dr. Yu Xiang using GitHub Actions</em></p>
+    <p><em>Generated by Dr.xy using Google Gemini and Github</em></p>
     </body>
     </html>
     """
     return html
-
 
 def send_email(html_content):
     if not EMAIL_SENDER or not EMAIL_PASSWORD or not EMAIL_RECEIVER:
@@ -165,33 +141,32 @@ def send_email(html_content):
         return
 
     msg = MIMEMultipart()
-    msg["From"] = EMAIL_SENDER
-    msg["To"] = ", ".join(EMAIL_RECEIVER)
-
-    # 邮件标题日期按中国时区
-    subject_date = datetime.now(TZ).strftime("%Y-%m-%d")
-    msg["Subject"] = f"Siyu Zhiping YuXiang Literature Digest: {KEYWORDS[0]} ({subject_date})"
-
-    msg.attach(MIMEText(html_content, "html"))
-
+    msg['From'] = EMAIL_SENDER
+    # Use a comma-separated string for the 'To' header
+    msg['To'] = ", ".join(EMAIL_RECEIVER)
+    msg['Subject'] = f"Siyu Zhiping Xiangyu Literature Digest: {KEYWORDS[0]} ({datetime.now().strftime('%Y-%m-%d')})"
+    
+    msg.attach(MIMEText(html_content, 'html'))
+    
     try:
-        server = smtplib.SMTP("smtp.gmail.com", 587)
+        server = smtplib.SMTP('smtp.gmail.com', 587)
         server.starttls()
         server.login(EMAIL_SENDER, EMAIL_PASSWORD)
+        # Pass the list of recipients to sendmail()
         server.sendmail(EMAIL_SENDER, EMAIL_RECEIVER, msg.as_string())
         server.quit()
         print(f"Email successfully sent to {', '.join(EMAIL_RECEIVER)}")
     except Exception as e:
         print(f"Failed to send email: {e}")
-        if "authentication failed" in str(e).lower():
-            print("Authentication failed. Use Google App Password (not account password).")
-
+        # Detailed error handling for authentication failure
+        if 'authentication failed' in str(e).lower():
+            print("Authentication failed. Ensure you are using a correct Google App Password, not your main account password.")
 
 if __name__ == "__main__":
     if not EMAIL_PASSWORD or not ENTREZ_EMAIL:
         print("Agent could not run. Check that EMAIL_PASSWORD and ENTREZ_EMAIL environment variables are set.")
     else:
-        data = fetch_articles(datetype="edat", retmax=100)
+        data = fetch_articles()
         if data:
             html = format_html_email(data)
             send_email(html)
