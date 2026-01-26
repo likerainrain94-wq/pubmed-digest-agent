@@ -22,7 +22,7 @@ else:
     EMAIL_RECEIVER = []
 
 
-KEYWORDS = ["intensive blood pressure", "frailty", "C-reactive protein", "inflammation", "biological age"]
+KEYWORDS = ["intensive blood pressure", "frailty", "C-reactive protein", "biological age"]
 
 # =========================
 # PubMed fetch
