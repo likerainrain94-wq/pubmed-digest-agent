@@ -27,7 +27,7 @@ KEYWORDS = ["intensive blood pressure", "frailty", "C-reactive protein", "biolog
 # =========================
 # PubMed fetch
 # =========================
-def fetch_articles(datetype: str = "edat", retmax: int = 100):
+def fetch_articles(datetype: str = "pdat", retmax: int = 100):
     """
     datetype:
       - "edat": PubMed收录/更新日期（更贴合“昨日新增”digest）
